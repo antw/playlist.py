@@ -1,0 +1,13 @@
+---
+  path: '.'
+
+  shows:
+    - name: Show One
+      filter: one
+    - name: Show Two
+      filter: another
+    - name: Show Three
+      filter: three(more)?
+
+  groups:
+    onetwo: "one another"
