@@ -1,5 +1,6 @@
 ---
   path: '.'
+  args: ''
 
   shows:
     - name: Show One

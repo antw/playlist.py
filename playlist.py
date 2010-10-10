@@ -188,6 +188,11 @@ if __name__ == "__main__":
 
     # Aaaaand, go! ===========================================================
 
+    if config['args'] and len(config['args']) > 0:
+        args = config['args'].split(" ")
+        args.extend(sys.argv)
+        sys.argv = args
+
     optparser = OptionParser(usage="playlist.py [options] [filters]")
 
     optparser.add_option("-c", "--count", type="int", default=5,
@@ -202,6 +207,9 @@ if __name__ == "__main__":
 
     (options, args) = optparser.parse_args()
 
+    print options
+
+    exit(0)
     shows.filter(" ".join(args))
 
     if options.list:
