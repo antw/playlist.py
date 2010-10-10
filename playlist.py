@@ -33,7 +33,7 @@ def is_enabled_filter(filter_string):
         return False
 
 def playlist_entry(episode):
-  return "#EXTINFO:0," + episode.split('/')[-1] + "\n" + episode
+  return "#EXTINF:0," + episode.split('/')[-1] + "\n" + episode
 
 def playlist_contents(episodes):
     """ Creates the contents of a playlist file for a given array of episode
