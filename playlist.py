@@ -21,7 +21,7 @@
 # IN THE SOFTWARE.
 
 from optparse import OptionParser
-import os, re, sys, random, yaml
+import os, re, sys, random, shutil, yaml
 
 def is_enabled_filter(filter_string):
     """ Returns whether the given filter string indicates that matching shows
@@ -31,6 +31,17 @@ def is_enabled_filter(filter_string):
         return filter_string[0] != "-"
     except IndexError, e:
         return False
+
+def playlist_entry(episode):
+  return "#EXTINFO:0," + episode.split('/')[-1] + "\n" + episode
+
+def playlist_contents(episodes):
+    """ Creates the contents of a playlist file for a given array of episode
+        paths.
+    """
+    playlist = "#EXTM3U\n"
+    playlist += "\n".join([playlist_entry(episode) for episode in episodes])
+    return playlist
 
 class Show(object):
     def __init__(self, name, base_path='.'):
@@ -105,23 +116,18 @@ class ShowList(object):
                         break
         return self
 
-    def random_episode_playlist(self, count=5):
-        """ Creates a playlist of random episodes from the currently enabled
-            shows in this ShowList.
+    def random_episodes(self, count=5):
+        """ Returns an array of paths to episodes which match the currently
+		    enabled filters.
         """
         all_matching_episodes = []
 
         for show in self.shows.values():
-            if show.enabled:
-                all_matching_episodes.extend(
-                    ["#EXTINF:0," + episode.split('/')[-1] + "\n" + episode
-                        for episode in show.episodes()])
+          if show.enabled:
+            all_matching_episodes.extend(show.episodes())
 
         random.shuffle(all_matching_episodes)
-
-        playlist = "#EXTM3U\n"
-        playlist += "\n".join(all_matching_episodes[0:count])
-        return playlist
+        return all_matching_episodes[0:count]
 
     def shortcuts(self):
         keys = self.filters.keys()
@@ -190,6 +196,9 @@ if __name__ == "__main__":
         help="Don't launch VLC")
     optparser.add_option("-l", "--list", action="store_true",
         help="List all the filters")
+    optparser.add_option("--copy", type="string", default=False,
+        help="Copies the media files to the given directory, and creates " \
+             "the playlist there")
 
     (options, args) = optparser.parse_args()
 
@@ -198,7 +207,23 @@ if __name__ == "__main__":
     if options.list:
         print shows.shortcuts()
     else:
-        with open("playlist.m3u", "w") as f:
-            f.write(shows.random_episode_playlist(options.count))
+        episodes = shows.random_episodes(options.count)
+        playlist_path = "playlist.m3u"
+
+        if options.copy:
+            # Copy the media files to another directory, and create the
+            # playlist there.
+            playlist_path = options.copy + "/" + playlist_path
+            orig_episodes = episodes
+            episodes      = []
+
+            for episode in orig_episodes:
+                new_path = options.copy + "/" + episode.split("/")[-1]
+                print "Copying " + episode.split("/")[-1]
+                shutil.copy(episode, new_path)
+                episodes.append(new_path)
+
+        with open(playlist_path, "w") as f:
+            f.write(playlist_contents(episodes))
         if not options.no_play:
-            os.system("open playlist.m3u")
+            os.system("open '" + playlist_path + "'")
