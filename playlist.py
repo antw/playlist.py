@@ -209,7 +209,7 @@ if __name__ == "__main__":
 
     (options, args) = optparser.parse_args(args)
 
-    shows.filter(" ".join(args))
+		shows.filter(" ".join(args[1:len(args)]))
 
     if options.list:
         print shows.shortcuts()
