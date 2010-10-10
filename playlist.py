@@ -225,7 +225,7 @@ if __name__ == "__main__":
             for episode in orig_episodes:
                 new_path = options.copy + "/" + episode.split("/")[-1]
                 print "Copying " + episode.split("/")[-1]
-                shutil.copy(episode, new_path)
+                shutil.copy2(episode, new_path)
                 episodes.append(new_path)
 
         with open(playlist_path, "w") as f:
