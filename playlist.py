@@ -188,11 +188,6 @@ if __name__ == "__main__":
 
     # Aaaaand, go! ===========================================================
 
-    if config['args'] and len(config['args']) > 0:
-        args = config['args'].split(" ")
-        args.extend(sys.argv)
-        sys.argv = args
-
     optparser = OptionParser(usage="playlist.py [options] [filters]")
 
     optparser.add_option("-c", "--count", type="int", default=5,
@@ -205,7 +200,14 @@ if __name__ == "__main__":
         help="Copies the media files to the given directory, and creates " \
              "the playlist there")
 
-    (options, args) = optparser.parse_args()
+    if config['args'] and len(config['args']) > 0:
+        args = [sys.argv[0]]
+        args.extend(config['args'].split(" "))
+        args.extend(sys.argv[1:len(sys.argv)])
+    else:
+        args = sys.args
+
+    (options, args) = optparser.parse_args(args)
 
     shows.filter(" ".join(args))
 
