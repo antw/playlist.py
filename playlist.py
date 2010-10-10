@@ -207,9 +207,6 @@ if __name__ == "__main__":
 
     (options, args) = optparser.parse_args()
 
-    print options
-
-    exit(0)
     shows.filter(" ".join(args))
 
     if options.list:
