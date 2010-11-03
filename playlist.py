@@ -28,7 +28,7 @@ def is_enabled_filter(filter_string):
         should be enabled, rather than disabled.
     """
     try:
-        return filter_string[0] != "-"
+        return filter_string[0] != "!"
     except IndexError, e:
         return False
 
@@ -102,7 +102,7 @@ class ShowList(object):
 
     def filter(self, filter_string):
         """Filters the showlist according to the given filter_string."""
-        all_pseudo_filter = re.compile(r"^-?all$")
+        all_pseudo_filter = re.compile(r"^!?all$")
 
         for token in filter_string.split(" "):
             enable_or_disable = is_enabled_filter(token)
@@ -152,7 +152,7 @@ class Filter(object):
         Line Is It Anyway?".
     """
     def __init__(self, match, shows):
-        self.regex = re.compile(r"^-?" + match)
+        self.regex = re.compile(r"^!?" + match)
         self.shows = shows
 
     def match(self, against):
