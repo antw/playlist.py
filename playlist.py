@@ -33,7 +33,7 @@ def is_enabled_filter(filter_string):
         return False
 
 def playlist_entry(episode):
-  return "#EXTINF:0," + episode.split('/')[-1] + "\n" + episode
+    return "#EXTINF:0," + episode.pretty() + "\n" + episode.path
 
 def playlist_contents(episodes):
     """ Creates the contents of a playlist file for a given array of episode
@@ -42,6 +42,20 @@ def playlist_contents(episodes):
     playlist = "#EXTM3U\n"
     playlist += "\n".join([playlist_entry(episode) for episode in episodes])
     return playlist
+
+class Episode:
+    def __init__(self, path, show):
+        """ Creates a new episode.
+        """
+        self.show = show
+        self.path = path
+
+    def pretty(self):
+        """ Returns a pretty name for the M3U; contains the show name
+            and the episode name.
+        """
+        return self.show.name + ' - ' + \
+            ''.join(os.path.basename(self.path).split('.')[0:-1])
 
 class Show(object):
     def __init__(self, name, base_path='.'):
@@ -69,17 +83,26 @@ class Show(object):
         return out
 
     def __episodes_for_path(self, path):
-        """ Gets a list of media files in the given directory, and subdirectories.
+        """ Gets a list ofo media files and returns a list of Episode
+            instances.
+        """
+        return [Episode(fpath, self) for fpath in self.__files_in_dir(path)]
+
+    def __files_in_dir(self, path):
+        """ Gets a list of video files in the given directory and
+            sub-directories.
         """
         files = []
         ext = re.compile(r".*(avi|mpg|mpeg|mp4|mkv|vob)$")
+
         for node in os.listdir(path):
             node = os.path.join(path, node)
             if os.path.isfile(node):
                 if ext.match(node): files.append(node)
             elif os.path.isdir(node):
-                for nested_node in self.__episodes_for_path(node):
+                for nested_node in self.__files_in_dir(node):
                     if ext.match(nested_node): files.append(nested_node)
+
         return files
 
 class ShowList(object):
@@ -118,7 +141,7 @@ class ShowList(object):
 
     def random_episodes(self, count=5):
         """ Returns an array of paths to episodes which match the currently
-		    enabled filters.
+            enabled filters.
         """
         all_matching_episodes = []
 
@@ -196,16 +219,18 @@ if __name__ == "__main__":
         help="Don't launch VLC")
     optparser.add_option("-l", "--list", action="store_true",
         help="List all the filters")
+    optparser.add_option("-s", "--shush", action="store_true",
+        help="Shush. Don't say what is being copied")
     optparser.add_option("--copy", type="string", default=False,
         help="Copies the media files to the given directory, and creates " \
              "the playlist there")
 
-    if config['args'] and len(config['args']) > 0:
+    if config.has_key('args') and config['args'] and len(config['args']) > 0:
         args = [sys.argv[0]]
         args.extend(config['args'].split(" "))
         args.extend(sys.argv[1:len(sys.argv)])
     else:
-        args = sys.args
+        args = sys.argv
 
     (options, args) = optparser.parse_args(args)
 
@@ -226,7 +251,12 @@ if __name__ == "__main__":
 
             for episode in orig_episodes:
                 new_path = options.copy + "/" + episode.split("/")[-1]
-                print "Copying " + episode.split("/")[-1]
+
+                if options.shush:
+                    print "Copying something"
+                else:
+                    print "Copying " + episode.split("/")[-1]
+
                 shutil.copy2(episode, new_path)
                 episodes.append(new_path)
 
