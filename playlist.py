@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2009-2010 Anthony Williams
+# Copyright (c) 2009-2011 Anthony Williams
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -41,6 +41,7 @@ def playlist_contents(episodes):
     """
     playlist = "#EXTM3U\n"
     playlist += "\n".join([playlist_entry(episode) for episode in episodes])
+    playlist += "\n"
     return playlist
 
 class Episode:
@@ -200,9 +201,11 @@ class Group(object):
 # Set up the script ==========================================================
 
 if __name__ == "__main__":
-    shows = ShowList()
 
-    with open("playlist.yml", "r") as f:
+    shows    = ShowList()
+    base_dir = os.path.dirname(os.path.realpath( __file__ ))
+
+    with open(base_dir + "/playlist.yml", "r") as f:
         config = yaml.load(f.read())
         for show in config["shows"]:
             shows.add_show(show["name"], show["filter"], config["path"])
@@ -213,7 +216,7 @@ if __name__ == "__main__":
 
     optparser = OptionParser(usage="playlist.py [options] [filters]")
 
-    optparser.add_option("-c", "--count", type="int", default=5,
+    optparser.add_option("-c", "--count", type="int", default=15,
         help="Number of episodes to playlist")
     optparser.add_option("-q", "--no-play", action="store_true",
         help="Don't launch VLC")
@@ -234,13 +237,19 @@ if __name__ == "__main__":
 
     (options, args) = optparser.parse_args(args)
 
+    # If args contains only the file name, the user failed to specify a
+    # filter, so instead we enable all episodes.
+    if len(args) < 2: args.append('all')
+
+    # Perform the filtering, ignoring the first argument which is the current
+    # file name.
     shows.filter(" ".join(args[1:len(args)]))
 
     if options.list:
         print shows.shortcuts()
     else:
         episodes = shows.random_episodes(options.count)
-        playlist_path = "playlist.m3u"
+        playlist_path = base_dir + "/playlist.m3u"
 
         if options.copy:
             # Copy the media files to another directory, and create the
